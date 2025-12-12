@@ -334,126 +334,304 @@ pytest tests/test_auth_safety.py -v
 ```
 
 ---
+# SWAGGER UI TEST CASES
 
-## 📊 EXPECTED RESULTS
+## 🎯 Overview
+Each quality attribute has **1 test case** to demonstrate on Swagger UI.
 
+---
+
+## 📍 Access Swagger UI
+
+**Local:** http://localhost:8000/docs  
+**Render:** https://ase-251.onrender.com/docs
+
+---
+
+## 1️⃣ AVAILABILITY Test Case
+
+**Test:** Register endpoint is accessible and responds quickly
+
+**Endpoint:** `POST /auth/register`
+
+**Request Body:**
+```json
+{
+  "full_name": "John Doe",
+  "email": "john.doe@example.com",
+  "password": "SecurePass123",
+  "role": "customer"
+}
+```
+
+**Expected Response:** `201 Created`
+```json
+{
+  "data": {
+    "user_id": "U1A2B3C4D5E6",
+    "full_name": "John Doe",
+    "email": "john.doe@example.com",
+    "role": "customer"
+  },
+  "meta": {
+    "message": "User registered successfully"
+  }
+}
+```
+
+**What to verify:**
+- ✅ Endpoint responds within 2 seconds
+- ✅ Returns 201 status code
+- ✅ System is accessible on Render (24/7 availability)
+
+---
+
+## 2️⃣ SAFETY Test Case
+
+**Test:** Duplicate email registration is rejected
+
+**Endpoint:** `POST /auth/register`
+
+**Step 1:** Register first user
+```json
+{
+  "full_name": "Jane Smith",
+  "email": "jane.smith@test.com",
+  "password": "Password123",
+  "role": "customer"
+}
+```
+
+**Step 2:** Try to register with same email
+```json
+{
+  "full_name": "Jane Duplicate",
+  "email": "jane.smith@test.com",
+  "password": "DifferentPass456",
+  "role": "customer"
+}
+```
+
+**Expected Response:** `409 Conflict`
+```json
+{
+  "detail": "Email already registered"
+}
+```
+
+**What to verify:**
+- ✅ First registration succeeds (201)
+- ✅ Second registration fails (409)
+- ✅ System prevents duplicate emails (data integrity)
+
+**Pytest command to verify:**
 ```bash
-$ pytest tests/test_auth*.py -v
-
-tests/test_auth.py::test_register_success_returns_created_user PASSED
-tests/test_auth.py::test_register_rejects_duplicate_email PASSED
-tests/test_auth.py::test_register_rejects_invalid_role PASSED
-tests/test_auth.py::test_login_success_with_hashed_password PASSED
-tests/test_auth.py::test_login_rejects_invalid_password PASSED
-tests/test_auth.py::test_login_blocks_blacklisted_user PASSED
-tests/test_auth.py::test_logout_returns_success PASSED
-
-tests/test_auth_security.py::test_password_is_hashed_not_plaintext PASSED
-tests/test_auth_security.py::test_same_password_produces_different_hashes PASSED
-tests/test_auth_security.py::test_password_length_limit_prevents_dos PASSED
-tests/test_auth_security.py::test_email_validation_rejects_invalid_formats PASSED
-tests/test_auth_security.py::test_sql_injection_in_email_is_safe PASSED
-tests/test_auth_security.py::test_nosql_injection_in_email_is_safe PASSED
-tests/test_auth_security.py::test_required_fields_validation PASSED
-tests/test_auth_security.py::test_only_valid_roles_accepted PASSED
-tests/test_auth_security.py::test_valid_roles_accepted PASSED
-tests/test_auth_security.py::test_blacklisted_user_cannot_login PASSED
-tests/test_auth_security.py::test_login_error_does_not_leak_user_existence PASSED
-tests/test_auth_security.py::test_duplicate_email_prevented PASSED
-tests/test_auth_security.py::test_legacy_plaintext_password_still_works PASSED
-tests/test_auth_security.py::test_empty_password_rejected PASSED
-tests/test_auth_security.py::test_logout_always_succeeds PASSED
-
-tests/test_auth_safety.py::test_valid_email_formats_accepted PASSED
-tests/test_auth_safety.py::test_invalid_email_formats_rejected PASSED
-tests/test_auth_safety.py::test_email_case_sensitivity PASSED
-tests/test_auth_safety.py::test_all_required_fields_must_be_present PASSED
-tests/test_auth_safety.py::test_empty_string_fields_rejected PASSED
-tests/test_auth_safety.py::test_valid_roles_accepted PASSED
-tests/test_auth_safety.py::test_invalid_roles_rejected PASSED
-tests/test_auth_safety.py::test_password_max_length_enforced PASSED
-tests/test_auth_safety.py::test_password_with_unicode_characters PASSED
-tests/test_auth_safety.py::test_short_passwords_accepted_but_shouldnt PASSED
-tests/test_auth_safety.py::test_duplicate_email_prevented PASSED
-tests/test_auth_safety.py::test_login_requires_email_and_password PASSED
-tests/test_auth_safety.py::test_login_with_empty_credentials PASSED
-tests/test_auth_safety.py::test_blacklisted_user_blocked_from_login PASSED
-tests/test_auth_safety.py::test_non_blacklisted_user_can_login PASSED
-tests/test_auth_safety.py::test_none_password_rejected PASSED
-tests/test_auth_safety.py::test_password_verification_handles_edge_cases PASSED
-tests/test_auth_safety.py::test_user_data_saved_correctly PASSED
-tests/test_auth_safety.py::test_login_returns_correct_user_data PASSED
-tests/test_auth_safety.py::test_fullname_with_special_characters PASSED
-tests/test_auth_safety.py::test_error_format_is_consistent PASSED
-
-============================== 42 passed in 2.45s ==============================
-
-Coverage: 70% of app.routers.auth
+pytest tests/test_auth.py::test_register_rejects_duplicate_email -v
 ```
 
 ---
 
-## 💡 PRESENTATION TIPS
+## 3️⃣ SECURITY Test Case
 
-### ✅ DO:
+**Test:** Password is hashed (not stored in plaintext)
 
-- Speak clearly, confidently, at moderate pace
-- Point cursor to important code sections when explaining
-- Highlight colors: 🟢 GREEN for strengths
-- Emphasize keywords: ASYNC, UUID, BCRYPT, VALIDATION
-- Pause briefly between sections for viewer comprehension
-- Show terminal output to demonstrate working tests
+**Endpoint:** `POST /auth/register` → `POST /auth/login`
 
-### ❌ DON'T:
+**Step 1:** Register user
+```json
+{
+  "full_name": "Alice Secure",
+  "email": "alice.secure@test.com",
+  "password": "MySecretPassword",
+  "role": "customer"
+}
+```
 
-- Read every line of code in detail (explain main ideas only)
-- Speak too fast or too slow
-- Skip the test demo (important to prove functionality)
-- Leave errors in terminal when running tests
-- Exceed 2 minutes (strict timeline!)
+**Step 2:** Login with correct password
+```json
+{
+  "email": "alice.secure@test.com",
+  "password": "MySecretPassword"
+}
+```
 
----
+**Expected Response:** `200 OK`
+```json
+{
+  "access_token": "user_alice.secure@test.com",
+  "token_type": "bearer",
+  "user_id": "U1234567890AB",
+  "email": "alice.secure@test.com",
+  "full_name": "Alice Secure",
+  "role": "customer"
+}
+```
 
-## 🎯 KEY MESSAGES
+**Step 3:** Verify in MongoDB
+- Check database: password is hashed (starts with `$2b$`)
+- Password "MySecretPassword" is NOT visible in plaintext
 
-1. **Availability: 6/10** - ✅ Deployed on Render with 24/7 accessibility, async operations for concurrent users
-2. **Safety: 6.5/10** - ✅ Email validation, role validation, duplicate prevention, blacklist protection
-3. **Security: 4/10** - ✅ Bcrypt password hashing with salt for secure storage
-4. **Reliability: 7/10** - ✅ UUID-based unique IDs (race condition fixed), Pydantic validation, async error handling
+**What to verify:**
+- ✅ Login succeeds with correct password
+- ✅ Password is stored as bcrypt hash (not plaintext)
+- ✅ Different users with same password have different hashes
 
-**Overall: 6/10** - System successfully implements core authentication with significant reliability improvements
-
----
-
-## 📋 PRE-RECORDING CHECKLIST
-
-- [ ] Code editor has opened necessary files
-- [ ] Terminal ready in `/BE` directory
-- [ ] Tests have been run and all pass
-- [ ] Server can start (python3 -m app.main)
-- [ ] **Render deployment URL ready** (to show live system)
-- [ ] **Postman/curl command to test live API** (optional demo)
-- [ ] Script and timeline reviewed
-- [ ] Camera/mic working properly
-- [ ] Screen resolution appropriate (1920x1080 recommended)
-- [ ] Font size in editor large enough to read (14-16pt)
-- [ ] Dark/Light theme suitable for recording
-
----
-
-## 📞 CONTACT & RESOURCES
-
-**Project:** ASE-251  
-**Branch:** ASE-RateLimit  
-**Repository:** hunghehe2205/ASE-251
-
-**Related files:**
-
-- `FEATURE_REQUIREMENTS.md` - Detailed requirements
-- `BE/tests/test_auth_security.py` - Security tests
-- `BE/tests/test_auth_safety.py` - Safety tests
-- `BE/app/routers/auth.py` - Main authentication code
+**Pytest command to verify:**
+```bash
+pytest tests/test_auth_security.py::test_password_is_hashed_not_plaintext -v
+```
 
 ---
 
-**Good luck with your presentation! 🎬🚀**
+## 4️⃣ RELIABILITY Test Case
+
+**Test:** Multiple registrations generate unique user IDs (no race condition)
+
+**Endpoint:** `POST /auth/register`
+
+**Step 1:** Register user 1
+```json
+{
+  "full_name": "User One",
+  "email": "user1@test.com",
+  "password": "Pass123",
+  "role": "customer"
+}
+```
+
+**Response:** User ID = `U1A2B3C4D5E6`
+
+**Step 2:** Register user 2
+```json
+{
+  "full_name": "User Two",
+  "email": "user2@test.com",
+  "password": "Pass456",
+  "role": "customer"
+}
+```
+
+**Response:** User ID = `U7F8G9H0I1J2` (different from User One)
+
+**Step 3:** Register user 3
+```json
+{
+  "full_name": "User Three",
+  "email": "user3@test.com",
+  "password": "Pass789",
+  "role": "customer"
+}
+```
+
+**Response:** User ID = `U3K4L5M6N7O8` (different from both previous)
+
+**What to verify:**
+- ✅ Each user gets unique user_id (UUID-based)
+- ✅ No duplicate IDs even with concurrent requests
+- ✅ System handles multiple registrations reliably
+
+**Code to show:**
+```python
+# BE/app/routers/auth.py line 48-51
+async def _generate_user_id(users_collection) -> str:
+    """Generate unique user_id using UUID to prevent race condition."""
+    return f"U{uuid.uuid4().hex[:12].upper()}"
+```
+
+---
+
+## 🎬 Video Demonstration Flow
+
+### Timeline (30 seconds per attribute):
+
+**0:00-0:30 - AVAILABILITY**
+1. Open Swagger UI at https://ase-251.onrender.com/docs
+2. Expand `POST /auth/register`
+3. Click "Try it out"
+4. Paste test case 1 JSON
+5. Click "Execute"
+6. Show 201 response within 2 seconds
+7. **Say:** "System is deployed on Render with 24/7 availability and async operations"
+
+**0:30-1:00 - SAFETY**
+1. Use same Swagger UI
+2. Register first user with jane.smith@test.com
+3. Show 201 success
+4. Try to register again with same email
+5. Show 409 Conflict error
+6. **Say:** "Duplicate email prevention ensures data integrity"
+7. Optional: Run pytest command in terminal
+
+**1:00-1:30 - SECURITY**
+1. Register alice.secure@test.com
+2. Show 201 success
+3. Login with same credentials
+4. Show 200 success with token
+5. Optional: Open MongoDB Compass to show hashed password ($2b$...)
+6. **Say:** "Bcrypt hashing with salt keeps passwords secure"
+7. Optional: Run pytest command in terminal
+
+**1:30-2:00 - RELIABILITY**
+1. Register 3 users quickly
+2. Show each response with different user_id
+3. Open `auth.py` and highlight UUID generation code (line 48-51)
+4. **Say:** "UUID-based IDs prevent race conditions and ensure uniqueness"
+5. Show summary scores
+
+---
+
+## 📊 Summary Scores
+
+| Quality Attribute | Score | Test Case Demonstrated |
+|------------------|-------|------------------------|
+| **Availability** | 6/10 | Register endpoint accessible on Render |
+| **Safety** | 6.5/10 | Duplicate email prevention |
+| **Security** | 4/10 | Password hashing with bcrypt |
+| **Reliability** | 7/10 | UUID-based unique IDs (no race condition) |
+
+**Overall: 6/10** - Core authentication implemented successfully
+
+---
+
+## 🚀 Quick Start Commands
+
+### Start local server:
+```bash
+cd /Users/phamnguyenviettri/Ses251/ASE-251/BE
+python3 -m app.main
+```
+
+### Access Swagger UI:
+```
+http://localhost:8000/docs
+```
+
+### Run all tests:
+```bash
+pytest tests/test_auth*.py -v
+```
+
+### Run specific test:
+```bash
+# Safety test
+pytest tests/test_auth.py::test_register_rejects_duplicate_email -v
+
+# Security test
+pytest tests/test_auth_security.py::test_password_is_hashed_not_plaintext -v
+```
+
+---
+
+## 💡 Tips for Video Recording
+
+1. **Use Render deployment** - Shows real availability (not just localhost)
+2. **Keep Swagger UI zoomed** - 125-150% for visibility
+3. **Show response times** - Highlights async performance
+4. **Demonstrate failures** - 409 error shows safety works
+5. **Point to code** - Line 48-51 in auth.py for UUID
+6. **Terminal side-by-side** - Run pytest while showing Swagger
+
+---
+
+**Good luck with your demonstration! 🎬**
+
